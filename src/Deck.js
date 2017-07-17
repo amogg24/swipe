@@ -16,7 +16,11 @@ const SWIPE_THRESHOLD = 0.25 * SCREEN_WIDTH;
 const SWIPE_OUT_DURATION = 250;
 
 class Deck extends Component {
-
+  //initialize these props if they arent defined when the deck is called
+  static defaultProps = {
+    onSwipeRight: () => {},
+    onSwipeLeft: () => {}
+  }
  constructor(props){
    super(props);
 
@@ -42,20 +46,33 @@ class Deck extends Component {
         }
       }
    });
-   this.state = { panResponder, position };
+   //index: current card being displayed
+   this.state = { panResponder, position, index: 0 };
 
  }
 
- forceSwipe(direction){
-   // if direction equals right, return value before :
-   // if direction equals right, return value after :
-   const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH;
-   //timing has
-   Animated.timing(this.state.position, {
-     toValue: { x, y: 0 },
-     duration: { SWIPE_OUT_DURATION } //how long animatin should take
-   }).start();
- }
+ forceSwipe(direction) {
+    const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH;
+    Animated.timing(this.state.position, {
+      toValue: { x, y: 0 },
+      duration: SWIPE_OUT_DURATION
+    }).start(() => this.onSwipeComplete(direction));
+  }
+
+  onSwipeComplete(direction) {
+    console.log(this.state.index);
+    const { onSwipeLeft, onSwipeRight, data } = this.props;
+
+    //get the data of the current item we are swiping
+    const item = data[this.state.index];
+
+
+    direction === 'right' ? onSwipeRight(item) : onSwipeLeft(item);
+    //reset position object right before its attached to next list item
+    this.state.position.setValue({ x: 0, y: 0 });
+    //we must reset index state, not modify
+    this.setState({ index: this.state.index + 1 });
+  }
 
  resetPosition() {
    //spring the position into view
@@ -81,9 +98,16 @@ class Deck extends Component {
   }
 
   renderCards() {
-    return this.props.data.map((item, index) => {
-      //only animate the first card on the screen
-      if (index === 0)
+    if (this.state.index >= this.props.data.length){
+      return this.props.renderNoMoreCards();
+    }
+
+    return this.props.data.map((item, i) => {
+      //don't render cards if they've already been swiped
+      if (i < this.state.index) { return null; }
+
+      //show only one card
+      if (i === this.state.index)
       {
           return (
             <Animated.View
@@ -95,6 +119,8 @@ class Deck extends Component {
             </Animated.View>
           );
       }
+
+      //render cards they have not been swiped
       return this.props.renderCard(item);
     });
   }
