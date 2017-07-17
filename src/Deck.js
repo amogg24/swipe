@@ -4,8 +4,13 @@ import {
   Style,
   Text,
   PanResponder,
-  Animated
+  Animated,
+  Dimensions
 } from 'react-native';
+
+//get the width of the current screen
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 class Deck extends Component {
 
  constructor(props){
@@ -29,7 +34,7 @@ class Deck extends Component {
 
     //interpolation allows us to relate x movement with y scale movement
     const rotate = position.x.interpolate({
-      inputRange: [-500, 0 , 500],
+      inputRange: [-SCREEN_WIDTH, 0 , SCREEN_WIDTH],
       outputRange: ['-120deg', '0deg' , '120deg']
 
     });
